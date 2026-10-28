@@ -74,6 +74,11 @@ jobs:
           cd output
           find . -maxdepth 1 -type f \( -name '*.deb' -o -name '*.zip' \) -print0 | sort -z | xargs -0 -r sha256sum > SHA256SUMS
           test -s SHA256SUMS
+      - name: Sanitize output file names (GitHub artifacts reject colons)
+        if: always()
+        run: |
+          cd output 2>/dev/null || exit 0
+          for f in *:*; do [ -e "$f" ] || continue; mv -- "$f" "${f//:/_}"; done
       - name: Save completed build outputs
         uses: actions/upload-artifact@v4
         with:
