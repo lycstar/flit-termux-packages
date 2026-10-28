@@ -1,0 +1,20 @@
+--- a/src/tools/hunspell.cxx
++++ b/src/tools/hunspell.cxx
+@@ -115,7 +115,7 @@
+   HUNSPELL_DATADIR "/hunspell:"        \
+   HUNSPELL_DATADIR "/myspell:"         \
+   HUNSPELL_DATADIR "/myspell/dicts:"   \
+-  "/usr/share/hunspell:"      \
++  "@TERMUX_PREFIX@/share/hunspell:"      \
+   "/usr/share/myspell:"       \
+   "/usr/share/myspell/dicts"
+ #define HOME getenv("HOME")
+@@ -124,7 +124,7 @@
+   "/usr/lib/libreoffice/share/extensions:"          \
+   "/usr/lib64/libreoffice/share/extensions"
+ #define DICBASENAME ".hunspell_"
+-#define LOGFILE "/tmp/hunspell.log"
++#define LOGFILE "@TERMUX_PREFIX@/tmp/hunspell.log"
+ #define DIRSEPCH '/'
+ #define DIRSEP "/"
+ #define PATHSEP ":"

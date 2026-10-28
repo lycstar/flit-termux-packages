@@ -1,0 +1,14 @@
+--- a/src/btop.cpp
++++ b/src/btop.cpp
+@@ -217,11 +217,6 @@ void clean_quit(int sig) {
+ 		if (pthread_join(Runner::runner_id, nullptr) != 0) {
+ 			Logger::warning("Failed to join _runner thread on exit!");
+ 		}
+-	#else
+-		constexpr struct timespec ts { .tv_sec = 5, .tv_nsec = 0 };
+-		if (pthread_timedjoin_np(Runner::runner_id, nullptr, &ts) != 0) {
+-			Logger::warning("Failed to join _runner thread on exit!");
+-		}
+ 	#endif
+ 	}
+ 

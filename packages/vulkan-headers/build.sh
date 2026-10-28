@@ -1,0 +1,11 @@
+TERMUX_PKG_HOMEPAGE=https://github.com/KhronosGroup/Vulkan-Headers
+TERMUX_PKG_DESCRIPTION="Vulkan Header files and API registry"
+TERMUX_PKG_LICENSE="Apache-2.0"
+TERMUX_PKG_MAINTAINER="@termux"
+TERMUX_PKG_VERSION="1.4.366"
+TERMUX_PKG_SRCURL=https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v${TERMUX_PKG_VERSION}.tar.gz
+TERMUX_PKG_SHA256=577b90c208e6fd39ec9a1460e48772f63c76f6f5afb441df2a977a0fdb3f618c
+TERMUX_PKG_PLATFORM_INDEPENDENT=true
+TERMUX_PKG_AUTO_UPDATE=true
+TERMUX_PKG_UPDATE_TAG_TYPE="newest-tag"
+TERMUX_PKG_UPDATE_VERSION_REGEXP="\d+\.\d+\.\d+"

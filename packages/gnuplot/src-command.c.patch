@@ -1,0 +1,13 @@
+For WEXITSTATUS macro.
+
+--- a/src/command.c
++++ b/src/command.c
+@@ -135,6 +135,8 @@ static TBOOLEAN pause_internal;    /* flag to indicate not to use a dialog box *
+ 
+ typedef enum ifstate {IF_INITIAL=1, IF_TRUE, IF_FALSE} ifstate;
+ 
++#include <sys/wait.h>
++
+ /* static prototypes */
+ static void command(void);
+ static TBOOLEAN is_array_assignment(void);

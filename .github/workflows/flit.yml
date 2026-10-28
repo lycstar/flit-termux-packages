@@ -1,0 +1,115 @@
+name: Build Flit toolchain
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Build target (hello always runs first)
+        type: choice
+        options: [bootstrap, packages, smoke]
+        default: bootstrap
+      packages:
+        description: Space-separated packages (packages target only)
+        type: string
+        default: openjdk-17 git gh which xz-utils
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flit-build
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate scripts and source fallbacks
+        run: |
+          bash -n scripts/build/termux_download.sh scripts/build/termux_source_mirrors.sh scripts/build-bootstraps.sh
+          python3 -m unittest discover -s scripts/tests -p 'test_flit_*.py' -v
+          bash -c '. scripts/properties.sh; test "$TERMUX_APP__PACKAGE_NAME" = cc.lycstar.flit; test "$TERMUX__PREFIX" = /data/data/cc.lycstar.flit/files/usr; test "$TERMUX_REPO_APP__PACKAGE_NAME" = com.termux'
+      - name: Build hello and dependencies from source (aarch64)
+        run: ./scripts/run-docker.sh ./build-package.sh -a aarch64 hello
+      - name: Verify package prefix
+        run: |
+          test -n "$(find output -maxdepth 1 -name 'hello_*_aarch64.deb' -print -quit)"
+          mkdir -p "$RUNNER_TEMP/hello"
+          find output -maxdepth 1 -name 'hello_*_aarch64.deb' -exec dpkg-deb -x '{}' "$RUNNER_TEMP/hello" \;
+          test -f "$RUNNER_TEMP/hello/data/data/cc.lycstar.flit/files/usr/bin/hello"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flit-hello-aarch64
+          path: output/*.deb
+          if-no-files-found: error
+
+  build:
+    if: inputs.target != 'smoke'
+    needs: smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    env:
+      BUILD_TARGET: ${{ inputs.target }}
+      BUILD_PACKAGES: ${{ inputs.packages }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build from source with the official builder
+        shell: bash
+        run: |
+          if [[ "$BUILD_TARGET" == bootstrap ]]; then
+            ./scripts/run-docker.sh ./scripts/build-bootstraps.sh --architectures aarch64
+          else
+            read -ra packages <<< "$BUILD_PACKAGES"
+            [[ ${#packages[@]} -gt 0 ]]
+            for package in "${packages[@]}"; do
+              [[ "$package" =~ ^[a-z0-9][a-z0-9.+-]*$ ]] || exit 64
+              test -f "packages/$package/build.sh"
+            done
+            ./scripts/run-docker.sh ./build-package.sh -a aarch64 "${packages[@]}"
+          fi
+      - name: Checksum build outputs
+        run: |
+          cd output
+          find . -maxdepth 1 -type f \( -name '*.deb' -o -name '*.zip' \) -print0 | sort -z | xargs -0 -r sha256sum > SHA256SUMS
+          test -s SHA256SUMS
+      - name: Save completed build outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: flit-${{ inputs.target }}-aarch64
+          path: |
+            output/*.deb
+            output/*.zip
+            output/SHA256SUMS
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: flit-${{ inputs.target }}-aarch64
+          path: output
+      - name: Publish APT packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev
+          ./scripts/flit/publish-packages.sh output
+      - name: Publish bootstrap
+        if: inputs.target == 'bootstrap'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="bootstrap-flit-aarch64-${GITHUB_RUN_ID}"
+          gh release create "$tag" output/bootstrap-aarch64.zip output/SHA256SUMS \
+            --target "$GITHUB_SHA" --title "Flit bootstrap (aarch64)" \
+            --notes 'Android aarch64 bootstrap built from source for cc.lycstar.flit.'

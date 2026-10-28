@@ -1,0 +1,12 @@
+--- a/src/btop_config.cpp
++++ b/src/btop_config.cpp
+@@ -344,7 +344,8 @@ namespace Config {
+ 		{"swap_disk", true},
+ 		{"show_disks", true},
+ 		{"only_physical", true},
+-		{"use_fstab", true},
++		// There is no /etc/fstab on Android.
++		{"use_fstab", false},
+ 		{"zfs_hide_datasets", false},
+ 		{"show_io_stat", true},
+ 		{"io_mode", false},

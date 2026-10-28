@@ -1,0 +1,12 @@
+TERMUX_PKG_HOMEPAGE=https://www.openh264.org/
+TERMUX_PKG_DESCRIPTION="Codec library supporting H.264 encoding and decoding"
+TERMUX_PKG_LICENSE="BSD 2-Clause"
+TERMUX_PKG_MAINTAINER="@termux"
+TERMUX_PKG_VERSION="2.7.0"
+TERMUX_PKG_SRCURL=https://github.com/cisco/openh264/archive/refs/tags/v${TERMUX_PKG_VERSION}.tar.gz
+TERMUX_PKG_SHA256=5178775c8b440073e70920e97d195efff721c0e56d0a78cc82c919e95d54924d
+TERMUX_PKG_AUTO_UPDATE=true
+TERMUX_PKG_DEPENDS="libc++"
+TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
+-Dtests=disabled
+"

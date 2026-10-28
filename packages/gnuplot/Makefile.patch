@@ -1,0 +1,11 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -358,7 +358,7 @@ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ AUTOMAKE_OPTIONS = foreign
+ AM_DISTCHECK_DVI_TARGET = 
+-SUBDIRS = config m4 term src docs man demo share
++SUBDIRS = config m4 term src man share
+ EXTRA_DIST = BUGS Copyright FAQ.pdf INSTALL INSTALL.gnu \
+ PATCHLEVEL PGPKEYS README RELEASE_NOTES \
+ win

@@ -1,0 +1,24 @@
+--- a/build.zig
++++ b/build.zig
+@@ -190,8 +190,8 @@ fn buildNcurses(
+         "--without-gpm",
+         "--without-sysmouse",
+         "--enable-widec",
+-        "--with-default-terminfo-dir=/usr/share/terminfo",
+-        "--with-terminfo-dirs=/usr/share/terminfo:/lib/terminfo:/usr/local/share/terminfo",
++        "--with-default-terminfo-dir=@TERMUX_PREFIX@/share/terminfo",
++        "--with-terminfo-dirs=@TERMUX_PREFIX@/share/terminfo:@TERMUX_PREFIX@/lib/terminfo",
+         "--with-fallbacks=screen linux vt100 xterm xterm-256color",
+     });
+ 
+--- a/src/main.zig
++++ b/src/main.zig
+@@ -504,7 +504,7 @@ pub fn main(init: std.process.Init.Minimal) void {
+     };
+ 
+     if (loadConf) {
+-        tryReadArgsFile("/etc/ncdu.conf");
++        tryReadArgsFile("@TERMUX_PREFIX@/etc/ncdu.conf");
+ 
+         if (env.getPosix("XDG_CONFIG_HOME")) |p| {
+             const path = std.Io.Dir.path.joinZ(allocator, &.{p, "ncdu", "config"}) catch unreachable;

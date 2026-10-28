@@ -1,0 +1,12 @@
+TERMUX_PKG_HOMEPAGE="https://github.com/ros/urdfdom"
+TERMUX_PKG_DESCRIPTION="Unified Robot Description Format (URDF) parser library and tools"
+TERMUX_PKG_GROUPS="science"
+TERMUX_PKG_LICENSE="BSD 3-Clause"
+TERMUX_PKG_MAINTAINER="Pooya Moradi <pvonmoradi@gmail.com>"
+TERMUX_PKG_VERSION="6.0.2"
+TERMUX_PKG_SRCURL="https://github.com/ros/urdfdom/archive/refs/tags/$TERMUX_PKG_VERSION.tar.gz"
+TERMUX_PKG_SHA256=47e26b6553afe8bb49cc675a5209fb9f2feb91ab9310360f8015d4cb98cc094a
+TERMUX_PKG_AUTO_UPDATE=true
+TERMUX_PKG_UPDATE_TAG_TYPE="newest-tag"
+TERMUX_PKG_DEPENDS="libc++, libtinyxml2, urdfdom-headers, console-bridge"
+TERMUX_PKG_FORCE_CMAKE=true
