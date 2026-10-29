@@ -31,6 +31,7 @@ declare -A REPO_BASE_URLS=(
 # The package manager that will be installed in bootstrap.
 # The default is 'apt'. Can be changed by using the '--pm' option.
 TERMUX_PACKAGE_MANAGER="apt"
+REPO_LAYOUT="standard"
 
 # The repository base url for package manager.
 # Can be changed by using the '--repository' option.
@@ -56,16 +57,20 @@ done
 # list is not available.
 read_package_list_deb() {
 	local architecture
-	for architecture in all "$1"; do
+	local architectures=(all "$1")
+	if [[ "$REPO_LAYOUT" == flat ]]; then architectures=("$1"); fi
+	for architecture in "${architectures[@]}"; do
 		if [ ! -e "${BOOTSTRAP_TMPDIR}/packages.${architecture}" ]; then
 			echo "[*] Downloading package list for architecture '${architecture}'..."
-			if ! curl --fail --location \
-				--output "${BOOTSTRAP_TMPDIR}/packages.${architecture}" \
-				"${REPO_BASE_URL}/dists/stable/main/binary-${architecture}/Packages"; then
+			local index_url="${REPO_BASE_URL}/dists/stable/main/binary-${architecture}/Packages"
+			if [[ "$REPO_LAYOUT" == flat ]]; then index_url="${REPO_BASE_URL}/Packages"; fi
+			if ! curl --fail --location --retry 3 \
+				--output "${BOOTSTRAP_TMPDIR}/packages.${architecture}" "$index_url"; then
 				if [ "$architecture" = "all" ]; then
 					echo "[!] Skipping architecture-independent package list as not available..."
 					continue
 				fi
+				exit 1
 			fi
 			echo >> "${BOOTSTRAP_TMPDIR}/packages.${architecture}"
 		fi
@@ -119,6 +124,10 @@ pull_package() {
 	mkdir -p "$package_tmpdir"
 
 	if [ ${TERMUX_PACKAGE_MANAGER} = "apt" ]; then
+		if [[ -z "${PACKAGE_METADATA[$package_name]}" ]]; then
+			echo "Missing runtime dependency: $package_name" >&2
+			exit 1
+		fi
 		local package_url
 		package_url="$REPO_BASE_URL/$(echo "${PACKAGE_METADATA[${package_name}]}" | grep -i "^Filename:" | awk '{ print $2 }')"
 		if [ "${package_url}" = "$REPO_BASE_URL" ] || [ "${package_url}" = "${REPO_BASE_URL}/" ]; then
@@ -146,7 +155,11 @@ pull_package() {
 
 		if [ ! -e "$package_tmpdir/package.deb" ]; then
 			echo "[*] Downloading '$package_name'..."
-			curl --fail --location --output "$package_tmpdir/package.deb" "$package_url"
+			curl --fail --location --retry 3 --output "$package_tmpdir/package.deb" "$package_url"
+			local expected_sha
+			expected_sha=$(echo "${PACKAGE_METADATA[$package_name]}" | awk '/^SHA256:/{print $2}')
+			[[ -n "$expected_sha" ]] || { echo "Missing SHA256 for $package_name" >&2; exit 1; }
+			echo "$expected_sha  $package_tmpdir/package.deb" | sha256sum -c -
 
 			echo "[*] Extracting '$package_name'..."
 			(cd "$package_tmpdir"
@@ -321,6 +334,8 @@ show_usage() {
 	echo "                             Multiple architectures should be passed"
 	echo "                             as comma-separated list."
 	echo
+	echo " --repository-layout LAYOUT  Repository layout: standard (default) or flat."
+	echo
 	echo " -r, --repository URL        Specify URL for APT repository from"
 	echo "                             which packages will be downloaded."
 	echo "                             This must be passed after '--pm' option."
@@ -378,6 +393,11 @@ while (($# > 0)); do
 				show_usage
 				exit 1
 			fi
+			;;
+		--repository-layout)
+			[[ "${2:-}" == flat || "${2:-}" == standard ]] || exit 64
+			REPO_LAYOUT="$2"
+			shift
 			;;
 		-r|--repository)
 			if [ $# -gt 1 ] && [ -n "$2" ] && [[ $2 != -* ]]; then

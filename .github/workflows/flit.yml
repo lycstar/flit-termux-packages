@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: Build target (hello always runs first)
+        description: Generate bootstrap from published packages, build packages, or run smoke test
         type: choice
         options: [bootstrap, packages, smoke]
         default: bootstrap
@@ -55,11 +55,19 @@ jobs:
       BUILD_PACKAGES: ${{ inputs.packages }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build from source with the official builder
+      - name: Build from source or assemble published runtime dependencies
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           if [[ "$BUILD_TARGET" == bootstrap ]]; then
-            ./scripts/run-docker.sh ./scripts/build-bootstraps.sh --architectures aarch64
+            ./scripts/generate-bootstraps.sh --architectures aarch64 \
+              --repository "https://github.com/${{ github.repository }}/releases/download/pool" \
+              --repository-layout flat
+            mkdir -p output
+            mv bootstrap-aarch64.zip output/
+            gh release download pool --pattern Packages --dir "$RUNNER_TEMP/apt-index"
+            python3 scripts/flit/check-bootstrap.py output/bootstrap-aarch64.zip "$RUNNER_TEMP/apt-index/Packages"
           else
             read -ra packages <<< "$BUILD_PACKAGES"
             [[ ${#packages[@]} -gt 0 ]]
@@ -101,6 +109,7 @@ jobs:
           name: flit-${{ inputs.target }}-aarch64
           path: output
       - name: Publish APT packages
+        if: inputs.target == 'packages'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
