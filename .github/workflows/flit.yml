@@ -11,7 +11,7 @@ on:
       packages:
         description: Space-separated packages (packages target only)
         type: string
-        default: openjdk-17 git gh which xz-utils
+        default: openjdk-17 git gh xz-utils
 
 permissions:
   contents: read

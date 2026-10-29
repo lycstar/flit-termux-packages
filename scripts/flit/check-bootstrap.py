@@ -35,11 +35,11 @@ Dir::State::status "{root / 'status'}";
 Dir::State::lists "{root / 'lists'}";
 Dir::Cache "{root / 'cache'}";
 Dir::Etc::sourcelist "{root / 'sources.list'}";
-Dir::Etc::sourceparts "-";
-Dir::Etc::parts "-";
+Dir::Etc::sourceparts "{root / 'etc'}";
+Dir::Etc::parts "{root / 'etc'}";
 Dir::Etc::main "-";
 Dir::Etc::preferences "{root / 'etc/preferences'}";
-Dir::Etc::preferencesparts "-";
+Dir::Etc::preferencesparts "{root / 'etc'}";
 Debug::NoLocking "true";
 ''')
         base = ['apt-get']
@@ -47,7 +47,7 @@ Debug::NoLocking "true";
         subprocess.run(base + ['update'], check=True, env=environment)
         subprocess.run(base + ['check'], check=True, env=environment)
         subprocess.run(base + ['--simulate', '--no-install-recommends',
-                               'install', 'openjdk-17', 'git', 'gh', 'which', 'xz-utils'], check=True, env=environment)
+                               'install', 'openjdk-17', 'git', 'gh', 'xz-utils'], check=True, env=environment)
         print('Bootstrap dependency check and development-tool installation simulation passed.')
 
 
